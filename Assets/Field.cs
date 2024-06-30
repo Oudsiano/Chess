@@ -99,9 +99,11 @@ public class Field : MonoBehaviour
                     return true;
                 }
 
-                if ((deltaX >= 3.7f && deltaX <= 4.3f) &&
+                if ((deltaX >= 3.7f && deltaX <= 4.3f)
+                    /*&&
                     ((checker.IsWhiteChecker() && (deltaZ >= 3.7f && deltaZ <= 4.3f)) ||
-                    (!checker.IsWhiteChecker() && (deltaZ <= -3.7f && deltaZ >= -4.3f))))
+                    (!checker.IsWhiteChecker() && (deltaZ <= -3.7f && deltaZ >= -4.3f)))*/
+                    )
                 {
                     Vector3 middlePosition = new Vector3((checker.transform.position.x + targetPosition.x) / 2, checker.transform.position.y, (checker.transform.position.z + targetPosition.z) / 2);
                     enemyChecker = GetCheckerAtPosition(middlePosition);
