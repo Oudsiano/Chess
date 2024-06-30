@@ -1,13 +1,18 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Field : MonoBehaviour
 {
     void OnMouseDown()
     {
+        Debug.Log($"Поле нажато: {transform.position} " + gameObject.name);
         CheckerSelector selectedChecker = CheckerSelector.GetSelectedChecker();
+
+
         if (selectedChecker != null)
         {
-            Debug.Log("Поле нажато: " + gameObject.name);
+            Debug.Log(Vector3.Distance(selectedChecker.transform.position, transform.position));
+            //Debug.Log($"Поле нажато: {transform.position}" + gameObject.name);
             CheckerSelector enemyChecker;
             if (IsValidMove(selectedChecker, transform.position, out enemyChecker))
             {
@@ -45,6 +50,10 @@ public class Field : MonoBehaviour
     {
         enemyChecker = null;
 
+        //out board
+        if (targetPosition.x < -5 || targetPosition.x > 10 || targetPosition.z > 17 || targetPosition.z < 2)
+            return false;
+
         if (!IsFieldOccupied(targetPosition))
         {
             float deltaX = Mathf.Abs(targetPosition.x - checker.transform.position.x);
@@ -54,25 +63,24 @@ public class Field : MonoBehaviour
 
             if (checker.isKing)
             {
-                if (deltaX == deltaZ)
+                bool _alreadyFindEnemy = false;
+
+                if (Mathf.Abs(deltaX) - Mathf.Abs(deltaZ) < 0.5f) //"fix" for float mistakes
                 {
-                    Vector3 direction = (targetPosition - checker.transform.position).normalized;
+                    //Надо собрать состояния всех ячеек по пути.
+                    Vector3 direction = (targetPosition - checker.GetCurrentField().transform.position).normalized * (2 / 0.71f);
                     Vector3 currentPos = checker.transform.position + direction;
 
-                    while (currentPos != targetPosition)
+                    while (Vector3.Distance(currentPos, targetPosition) > 0.7f)
                     {
                         if (IsFieldOccupied(currentPos))
                         {
+                            if (_alreadyFindEnemy)
+                                return false;
+
                             enemyChecker = GetCheckerAtPosition(currentPos);
                             if (enemyChecker != null && enemyChecker.IsWhiteChecker() != checker.IsWhiteChecker())
-                            {
-                                currentPos += direction;
-                                if (currentPos == targetPosition && !IsFieldOccupied(currentPos))
-                                {
-                                    return true;
-                                }
-                            }
-                            return false;
+                                _alreadyFindEnemy = true;
                         }
                         currentPos += direction;
                     }
@@ -109,7 +117,7 @@ public class Field : MonoBehaviour
         CheckerSelector[] allCheckers = FindObjectsOfType<CheckerSelector>();
         foreach (CheckerSelector checker in allCheckers)
         {
-            if (Vector3.Distance(checker.transform.position, targetPosition) < 0.1f)
+            if (Vector3.Distance(checker.transform.position, targetPosition) < 0.7f)
             {
                 Debug.Log("Поле занято: " + checker.gameObject.name);
                 return true;
@@ -123,7 +131,7 @@ public class Field : MonoBehaviour
         CheckerSelector[] allCheckers = FindObjectsOfType<CheckerSelector>();
         foreach (CheckerSelector checker in allCheckers)
         {
-            if (Vector3.Distance(checker.transform.position, position) < 0.5f)
+            if (Vector3.Distance(checker.transform.position, position) < 0.7f)
             {
                 Debug.Log($"Шашка найдена на позиции: {position}, имя: {checker.gameObject.name}");
                 return checker;
@@ -146,7 +154,7 @@ public class Field : MonoBehaviour
             CheckerSelector enemyChecker;
             if (IsValidMove(checker, targetPosition, out enemyChecker) && enemyChecker != null)
             {
-                Debug.Log($"Есть возможность еще одного взятия: {targetPosition}");
+                Debug.Log($"Есть возможность еще одного взятия: {targetPosition} {enemyChecker.name}");
                 return true;
             }
         }
