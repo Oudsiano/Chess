@@ -30,13 +30,13 @@ public class Field : MonoBehaviour
                     else
                     {
                         Debug.Log("Переключение хода после взятия.");
-                        CheckerSelector.ToggleTurn(); // Переключаем ход после взятия, если нет возможности еще одного взятия
+                        CheckerSelector.ToggleTurn(this); // Переключаем ход после взятия, если нет возможности еще одного взятия
                     }
                 }
                 else
                 {
                     Debug.Log("Переключение хода после обычного хода.");
-                    CheckerSelector.ToggleTurn(); // Переключаем ход после обычного хода
+                    CheckerSelector.ToggleTurn(this); // Переключаем ход после обычного хода
                 }
             }
             else
@@ -59,7 +59,7 @@ public class Field : MonoBehaviour
             float deltaX = Mathf.Abs(targetPosition.x - checker.transform.position.x);
             float deltaZ = targetPosition.z - checker.transform.position.z;
 
-            Debug.Log($"Проверка допустимости хода: deltaX = {deltaX}, deltaZ = {deltaZ}");
+            //Debug.Log($"Проверка допустимости хода: deltaX = {deltaX}, deltaZ = {deltaZ}");
 
             if (checker.isKing)
             {
@@ -79,7 +79,10 @@ public class Field : MonoBehaviour
                                 return false;
 
                             enemyChecker = GetCheckerAtPosition(currentPos);
-                            if (enemyChecker != null && enemyChecker.IsWhiteChecker() != checker.IsWhiteChecker())
+                            if (enemyChecker.IsWhiteChecker() == checker.IsWhiteChecker()) 
+                                enemyChecker = null;
+
+                            if (enemyChecker != null)
                                 _alreadyFindEnemy = true;
                         }
                         currentPos += direction;
@@ -119,7 +122,7 @@ public class Field : MonoBehaviour
         {
             if (Vector3.Distance(checker.transform.position, targetPosition) < 0.7f)
             {
-                Debug.Log("Поле занято: " + checker.gameObject.name);
+                //Debug.Log("Поле занято: " + checker.gameObject.name);
                 return true;
             }
         }
@@ -133,14 +136,14 @@ public class Field : MonoBehaviour
         {
             if (Vector3.Distance(checker.transform.position, position) < 0.7f)
             {
-                Debug.Log($"Шашка найдена на позиции: {position}, имя: {checker.gameObject.name}");
+                //Debug.Log($"Шашка найдена на позиции: {position}, имя: {checker.gameObject.name}");
                 return checker;
             }
         }
         return null;
     }
 
-    bool CanCaptureAgain(CheckerSelector checker, Vector3 currentPosition)
+    public bool CanCaptureAgain(CheckerSelector checker, Vector3 currentPosition)
     {
         Vector3[] possibleCapturePositions = {
             new Vector3(currentPosition.x + 4, currentPosition.y, currentPosition.z + 4),
@@ -158,7 +161,33 @@ public class Field : MonoBehaviour
                 return true;
             }
         }
-        Debug.Log("Нет возможности еще одного взятия.");
+        //Debug.Log("Нет возможности еще одного взятия.");
+        return false;
+    }
+    public bool CanAnyMove(CheckerSelector checker)
+    {
+        Vector3 currentPosition = checker.transform.position;
+
+        //Первая проверка. Уже ее достаточно.
+        if (CanCaptureAgain(checker, currentPosition)) 
+            return true;
+        //Но если не прошло, то код пойдет дальше
+
+        Vector3[] possibleCapturePositions = {
+            new Vector3(currentPosition.x + 2, currentPosition.y, currentPosition.z + 2),
+            new Vector3(currentPosition.x - 2, currentPosition.y, currentPosition.z + 2),
+            new Vector3(currentPosition.x + 2, currentPosition.y, currentPosition.z - 2),
+            new Vector3(currentPosition.x - 2, currentPosition.y, currentPosition.z - 2)
+        };
+
+        foreach (var targetPosition in possibleCapturePositions)
+        {
+            CheckerSelector enemyChecker;
+            if (IsValidMove(checker, targetPosition, out enemyChecker))
+            {
+                return true;
+            }
+        }
         return false;
     }
 }

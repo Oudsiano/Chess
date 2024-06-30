@@ -13,8 +13,6 @@ public class CheckerSelector : MonoBehaviour
     public bool isKing = false; // true, если шашка превращена в дамку
     private static bool isWhiteTurn = true; // true, если ход белых, false, если ход черных
 
-    private Field _currentField;
-
     void Start()
     {
         originalMaterial = GetComponent<Renderer>().material;
@@ -76,7 +74,6 @@ public class CheckerSelector : MonoBehaviour
 
     public void MoveTo(Vector3 newPosition)
     {
-        DisplayPromotionMessage();
         newPosition.y = transform.position.y; // Сохраняем исходное значение y
         transform.position = newPosition;
         Debug.Log("Шашка перемещена на: " + newPosition);
@@ -138,8 +135,36 @@ public class CheckerSelector : MonoBehaviour
         Destroy(promotionTextGO, 2.0f);
     }
 
-    public static void ToggleTurn()
+    public static void ToggleTurn(Field _field)
     {
+        //Вставил сюда проверку на конец игры.
+        int blackPosible = 0;
+        int whitePosible = 0;
+
+
+        //Использовал Field _field просто, чтобы получить ссылку на функции и не перепесивыть всю структуру.
+
+        CheckerSelector[] allCheckers = FindObjectsOfType<CheckerSelector>();
+        foreach (CheckerSelector checker in allCheckers)
+        {
+            if (_field.CanAnyMove(checker))
+            {
+                if (checker.isWhiteChecker) whitePosible++;
+                else blackPosible++;
+            }
+        }
+        if (isWhiteTurn && blackPosible == 0)
+        {
+            DisplayEndGameMessage("Игра законченна, победа белых");
+        }
+
+        if (!isWhiteTurn && whitePosible == 0)
+        {
+            DisplayEndGameMessage("Игра законченна, победа черных");
+        }   
+
+
+
         isWhiteTurn = !isWhiteTurn;
         Debug.Log("Ход переключен. Сейчас ход белых: " + isWhiteTurn);
     }
@@ -152,6 +177,32 @@ public class CheckerSelector : MonoBehaviour
     public void RemoveChecker()
     {
         Debug.Log("Шашка удалена: " + gameObject.name);
-        Destroy(gameObject);
+        DestroyImmediate(gameObject);
+    }
+    public static void DisplayEndGameMessage(string _text)
+    {
+        // Создание текста на экране
+        GameObject canvasGO = GameObject.Find("Canvas");
+        if (canvasGO == null)
+        {
+            canvasGO = new GameObject("Canvas");
+            Canvas canvas = canvasGO.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasGO.AddComponent<CanvasScaler>();
+            canvasGO.AddComponent<GraphicRaycaster>();
+        }
+        GameObject promotionTextGO = new GameObject("EndGameTextUI");
+        promotionTextGO.transform.SetParent(canvasGO.transform);
+
+        RectTransform rectTransform = promotionTextGO.AddComponent<RectTransform>();
+        rectTransform.anchoredPosition = Vector2.zero;
+        rectTransform.sizeDelta = new Vector2(600, 200);
+
+        TMPro.TextMeshProUGUI text = promotionTextGO.AddComponent<TMPro.TextMeshProUGUI>();
+        text.text = _text;
+        text.fontSize = 48;
+        text.color = Color.red;
+        text.alignment = TextAlignmentOptions.Center;
+
     }
 }
