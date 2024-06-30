@@ -91,6 +91,7 @@ public class Field : MonoBehaviour
                 }
             }
             else
+            if (Mathf.Abs(deltaX) - Mathf.Abs(deltaZ) < 0.5f)
             {
                 if ((deltaX >= 1.7f && deltaX <= 2.3f) &&
                     ((checker.IsWhiteChecker() && (deltaZ >= 1.7f && deltaZ <= 2.3f)) ||
