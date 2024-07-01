@@ -2,24 +2,41 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
+
 public class PauseManager : MonoBehaviour
 {
-    public void Gotomenyscene() {
+    [SerializeField] public GameObject restartPanel;
+    [SerializeField] public TMP_Text infoWinner;
+
+    public void Gotomenyscene()
+    {
         SceneManager.LoadScene(0);
     }
-    public void Exitgame() {
+
+    public void Exitgame()
+    {
         Application.Quit();
     }
 
     public void PauseGame()
     {
-        Time.timeScale = 0; // Остановка времени   
+        Time.timeScale = 0; // Pausing the game   
     }
 
     public void ResumeGame()
     {
+        Time.timeScale = 1; // Resuming the game 
+    }
 
-        Time.timeScale = 1; // Возврат времени к нормальному течению
+    public void ReastartLevel()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
 
+    public void DisplayEndGame(string winner)
+    {
+        infoWinner.text = winner;
+        restartPanel.SetActive(true);
     }
 }

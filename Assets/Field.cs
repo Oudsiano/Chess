@@ -5,24 +5,22 @@ public class Field : MonoBehaviour
 {
     void OnMouseDown()
     {
-        Debug.Log($"Поле нажато: {transform.position} " + gameObject.name);
-        CheckerSelector selectedChecker = CheckerSelector.GetSelectedChecker();
-
+        Debug.Log($"Поле нажато: {transform.position} " + gameObject.name); // Вывод сообщения о нажатии на поле
+        CheckerSelector selectedChecker = CheckerSelector.GetSelectedChecker(); // Получение текущей выделенной шашки
 
         if (selectedChecker != null)
         {
-            Debug.Log(Vector3.Distance(selectedChecker.transform.position, transform.position));
-            //Debug.Log($"Поле нажато: {transform.position}" + gameObject.name);
+            Debug.Log(Vector3.Distance(selectedChecker.transform.position, transform.position)); // Вывод расстояния между шашкой и целью
             CheckerSelector enemyChecker;
-            if (IsValidMove(selectedChecker, transform.position, out enemyChecker))
+            if (IsValidMove(selectedChecker, transform.position, out enemyChecker)) // Проверка допустимости хода
             {
                 Debug.Log("Допустимый ход для шашки: " + selectedChecker.gameObject.name);
-                selectedChecker.MoveTo(transform.position);
+                selectedChecker.MoveTo(transform.position); // Перемещение шашки на новое поле
 
-                if (enemyChecker != null)
+                if (enemyChecker != null) // Если на пути есть вражеская шашка
                 {
-                    enemyChecker.RemoveChecker();
-                    if (CanCaptureAgain(selectedChecker, transform.position))
+                    enemyChecker.RemoveChecker(); // Удаление вражеской шашки
+                    if (CanCaptureAgain(selectedChecker, transform.position)) // Проверка возможности еще одного взятия
                     {
                         Debug.Log("Можно сделать еще одно взятие");
                         // Не переключаем ход, чтобы игрок мог сделать еще одно взятие
@@ -30,13 +28,13 @@ public class Field : MonoBehaviour
                     else
                     {
                         Debug.Log("Переключение хода после взятия.");
-                        CheckerSelector.ToggleTurn(this); // Переключаем ход после взятия, если нет возможности еще одного взятия
+                        CheckerSelector.ToggleTurn(this); // Переключение хода, если нет возможности еще одного взятия
                     }
                 }
                 else
                 {
                     Debug.Log("Переключение хода после обычного хода.");
-                    CheckerSelector.ToggleTurn(this); // Переключаем ход после обычного хода
+                    CheckerSelector.ToggleTurn(this); // Переключение хода после обычного хода
                 }
             }
             else
@@ -50,24 +48,23 @@ public class Field : MonoBehaviour
     {
         enemyChecker = null;
 
-        //out board
+        // Проверка выхода за границы доски
         if (targetPosition.x < -5 || targetPosition.x > 10 || targetPosition.z > 17 || targetPosition.z < 2)
             return false;
 
-        if (!IsFieldOccupied(targetPosition))
+        if (!IsFieldOccupied(targetPosition)) // Проверка занятости поля
         {
             float deltaX = Mathf.Abs(targetPosition.x - checker.transform.position.x);
             float deltaZ = targetPosition.z - checker.transform.position.z;
 
-            //Debug.Log($"Проверка допустимости хода: deltaX = {deltaX}, deltaZ = {deltaZ}");
-
+            // Проверка допустимости хода для короля
             if (checker.isKing)
             {
                 bool _alreadyFindEnemy = false;
 
-                if (Mathf.Abs(deltaX) - Mathf.Abs(deltaZ) < 0.5f) //"fix" for float mistakes
+                if (Mathf.Abs(deltaX) - Mathf.Abs(deltaZ) < 0.5f) // "Исправление" ошибок с плавающей точкой
                 {
-                    //Надо собрать состояния всех ячеек по пути.
+                    // Сбор состояния всех ячеек по пути
                     Vector3 direction = (targetPosition - checker.GetCurrentField().transform.position).normalized * (2 / 0.71f);
                     Vector3 currentPos = checker.transform.position + direction;
 
@@ -79,7 +76,7 @@ public class Field : MonoBehaviour
                                 return false;
 
                             enemyChecker = GetCheckerAtPosition(currentPos);
-                            if (enemyChecker.IsWhiteChecker() == checker.IsWhiteChecker()) 
+                            if (enemyChecker.IsWhiteChecker() == checker.IsWhiteChecker())
                                 enemyChecker = null;
 
                             if (enemyChecker != null)
@@ -93,6 +90,7 @@ public class Field : MonoBehaviour
             else
             if (Mathf.Abs(deltaX) - Mathf.Abs(deltaZ) < 0.5f)
             {
+                // Проверка допустимости обычного хода
                 if ((deltaX >= 1.7f && deltaX <= 2.3f) &&
                     ((checker.IsWhiteChecker() && (deltaZ >= 1.7f && deltaZ <= 2.3f)) ||
                     (!checker.IsWhiteChecker() && (deltaZ <= -1.7f && deltaZ >= -2.3f))))
@@ -100,11 +98,8 @@ public class Field : MonoBehaviour
                     return true;
                 }
 
-                if ((deltaX >= 3.7f && deltaX <= 4.3f)
-                    /*&&
-                    ((checker.IsWhiteChecker() && (deltaZ >= 3.7f && deltaZ <= 4.3f)) ||
-                    (!checker.IsWhiteChecker() && (deltaZ <= -3.7f && deltaZ >= -4.3f)))*/
-                    )
+                // Проверка допустимости хода с взятием
+                if ((deltaX >= 3.7f && deltaX <= 4.3f))
                 {
                     Vector3 middlePosition = new Vector3((checker.transform.position.x + targetPosition.x) / 2, checker.transform.position.y, (checker.transform.position.z + targetPosition.z) / 2);
                     enemyChecker = GetCheckerAtPosition(middlePosition);
@@ -115,17 +110,17 @@ public class Field : MonoBehaviour
                 }
             }
         }
-        return false;
+        return false; // Если ход не допустим, возвращаем false
     }
 
     bool IsFieldOccupied(Vector3 targetPosition)
     {
+        // Проверка, занято ли поле шашкой
         CheckerSelector[] allCheckers = FindObjectsOfType<CheckerSelector>();
         foreach (CheckerSelector checker in allCheckers)
         {
             if (Vector3.Distance(checker.transform.position, targetPosition) < 0.7f)
             {
-                //Debug.Log("Поле занято: " + checker.gameObject.name);
                 return true;
             }
         }
@@ -134,12 +129,12 @@ public class Field : MonoBehaviour
 
     CheckerSelector GetCheckerAtPosition(Vector3 position)
     {
+        // Получение шашки на указанной позиции
         CheckerSelector[] allCheckers = FindObjectsOfType<CheckerSelector>();
         foreach (CheckerSelector checker in allCheckers)
         {
             if (Vector3.Distance(checker.transform.position, position) < 0.7f)
             {
-                //Debug.Log($"Шашка найдена на позиции: {position}, имя: {checker.gameObject.name}");
                 return checker;
             }
         }
@@ -148,6 +143,7 @@ public class Field : MonoBehaviour
 
     public bool CanCaptureAgain(CheckerSelector checker, Vector3 currentPosition)
     {
+        // Проверка возможности еще одного взятия
         Vector3[] possibleCapturePositions = {
             new Vector3(currentPosition.x + 4, currentPosition.y, currentPosition.z + 4),
             new Vector3(currentPosition.x - 4, currentPosition.y, currentPosition.z + 4),
@@ -164,17 +160,16 @@ public class Field : MonoBehaviour
                 return true;
             }
         }
-        //Debug.Log("Нет возможности еще одного взятия.");
         return false;
     }
+
     public bool CanAnyMove(CheckerSelector checker)
     {
+        // Проверка возможности любого хода для данной шашки
         Vector3 currentPosition = checker.transform.position;
 
-        //Первая проверка. Уже ее достаточно.
-        if (CanCaptureAgain(checker, currentPosition)) 
+        if (CanCaptureAgain(checker, currentPosition))
             return true;
-        //Но если не прошло, то код пойдет дальше
 
         Vector3[] possibleCapturePositions = {
             new Vector3(currentPosition.x + 2, currentPosition.y, currentPosition.z + 2),
